@@ -4,6 +4,8 @@ from flask import Flask
 
 import pandas as pd
 
+from flask import request
+
 
 def create_app(test_config=None):
     # create and configure the app
@@ -37,5 +39,22 @@ def create_app(test_config=None):
     def preview():
         # return str(df[['Date','Location','Fatalities']].head())
         return df.head().to_html()
+
+    @app.route('/filter', methods=['POST', 'GET'])
+    def filter():
+        if request.method == 'GET':
+            params = {}
+            query_df = df
+            
+            for k,v in request.args.items():
+
+                if k in df.columns:
+
+                    query_df = query_df[query_df[k] == v]
+
+            return query_df.to_html()
+        else:
+            return 'I am a teapot!', 418
+
 
     return app
