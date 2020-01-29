@@ -2,6 +2,8 @@ import os
 
 from flask import Flask
 
+import pandas as pd
+
 
 def create_app(test_config=None):
     # create and configure the app
@@ -24,9 +26,16 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    df = pd.read_csv('Airplane_Crashes_and_Fatalities_Since_1908.csv')
+
     # a simple page that says hello
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
+
+    @app.route('/preview')
+    def preview():
+        # return str(df[['Date','Location','Fatalities']].head())
+        return df.head().to_html()
 
     return app
