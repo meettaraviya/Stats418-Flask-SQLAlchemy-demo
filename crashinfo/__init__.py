@@ -109,3 +109,75 @@ def filterdb():
         return json.dumps([item.as_dict() for item in rs], indent=4)
     else:
         return 'I am a teapot!', 418
+
+
+
+from flask import send_file
+
+
+from geopy.geocoders import Nominatim
+geolocator = Nominatim()
+# df['coord'] = [geolocator.geocode(loc)[-1] for loc in df['Location']]
+import numpy as np
+df['coord'] = [(np.random.uniform(-90, 90), np.random.uniform(0, 180)) for loc in df['Location']]
+
+@app.route('/visualize/<string:lib>')
+def visualie(lib='matplotlib'):
+    if 'year' in request.args:
+        try:
+            year = int(request.args['year'])
+        except ValueError:
+            return "'year' parameter should be an integer", 422
+    else:
+        return "You need to specify a year", 422
+
+    if lib == 'matplotlib':
+
+
+        query_df = df[df['Date'].str.endswith('2000')].groupby(df['Date'].str[:2]).count()['Date']
+
+
+        import matplotlib.pyplot as plt; plt.rcdefaults()
+        import numpy as np
+        import calendar
+
+        objects = calendar.month_abbr[1:]
+        ticks = np.arange(len(objects))
+        heights = list(query_df)
+
+        plt.bar(ticks, heights, align='center', alpha=0.5)
+        plt.xticks(ticks, objects)
+        plt.ylabel('Number of crashes')
+        plt.title(f'Number of crashes by month in {year}')
+
+        plt.savefig('tmp/plot.png')
+
+        response = send_file('../tmp/plot.png')
+
+        return response
+
+
+    if lib == 'plotly':
+
+        import plotly.graph_objects as go
+
+        query_df = df[df['Date'].str.endswith('2000')].groupby(df['Date'].str[:2]).count()
+
+
+        fig = go.Figure(data=go.Scattergeo(
+                lon = list(zip(query_df['coord']))[0],
+                lat = list(zip(query_df['coord']))[1],
+                text = query_df['Location'],
+                mode = 'markers',
+                # marker_color = query_df['cnt'],
+                ))
+
+        fig.update_layout(
+                title = 'Crashes',
+                # geo_scope='usa',
+            )
+        fig.write_image("tmp/plot.webp")
+
+        response = send_file('../tmp/plot.webp')
+
+        return response
