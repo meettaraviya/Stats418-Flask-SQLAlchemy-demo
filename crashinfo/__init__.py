@@ -13,6 +13,8 @@ import datetime
 
 import re
 
+import json
+
 # def create_app(test_config=None):
     # create and configure the app
 app = Flask(__name__, instance_relative_config=True)
@@ -93,3 +95,20 @@ def populatedb():
     db.session.commit()
 
     return 'Done!'
+
+@app.route('/api/filter', methods=['POST', 'GET'])
+def filterdb():
+    if request.method == 'GET':
+        
+        if 'Location' in request.args:
+
+            rs = db.session.query(Crash).filter_by(location=request.args['Location'])
+
+        else:
+
+            rs = db.session.query(Crash).all()
+
+        return json.dumps([item.as_dict() for item in rs], indent=4)
+        
+    else:
+        return 'I am a teapot!', 418
