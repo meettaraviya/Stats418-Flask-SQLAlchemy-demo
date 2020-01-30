@@ -1,3 +1,4 @@
+import crashinfo.Lecture3_flask_demo  # Add everything from last week's API
 from crashinfo.models import Crash
 import os
 from flask import Flask
@@ -35,6 +36,8 @@ try:
 except OSError:
     pass
 
+
+# https://www.kaggle.com/saurograndi/airplane-crashes-since-1908
 df = pd.read_csv('Airplane_Crashes_and_Fatalities_Since_1908.csv')
 
 # a simple page that says hello

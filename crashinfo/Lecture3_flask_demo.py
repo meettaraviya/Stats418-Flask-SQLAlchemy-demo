@@ -45,7 +45,7 @@ def hello3(name="World"):
 #
 # Lets use Airplane crash data: https://www.kaggle.com/saurograndi/airplane-crashes-since-1908
 #
-Data = pd.read_csv("~jordan/data/Airplane_Crashes_and_Fatalities_Since_1908.csv")
+Data = pd.read_csv("Airplane_Crashes_and_Fatalities_Since_1908.csv")
 
 # Cleanup
 Data["Time"] = Data["Time"].replace(np.nan, "00:00")
@@ -132,4 +132,5 @@ def total_crashes(year=False):
 # --> debug: enable debugging and more verbose information since we are still
 # developing the app and not running it in a production environment
 if __name__ == "__main__":
-    app.run(host="stats418.thevelozgroup.com", port=os.getuid() + 50000, debug=True)
+    app.run(host="stats418.thevelozgroup.com",
+            port=os.getuid() + 50000, debug=True)
