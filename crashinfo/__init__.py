@@ -9,13 +9,16 @@ from flask import request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
+import datetime
+
+import re
 
 # def create_app(test_config=None):
     # create and configure the app
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_mapping(
     SECRET_KEY='dev',
-    DATABASE=os.path.join(app.instance_path, 'crashinfo.sqlite'),
+    SQLALCHEMY_DATABASE_URI='sqlite:///'+os.path.join(app.instance_path, 'crashinfo.db'),
 )
 
 
@@ -25,7 +28,6 @@ app.config.from_mapping(
 # else:
 #     # load the test config if passed in
 #     app.config.from_mapping(test_config)
-
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -63,5 +65,31 @@ def filter():
     else:
         return 'I am a teapot!', 418
 
-# return app
 
+@app.route('/populatedb', methods=['GET'])
+def populatedb():
+
+    pattern = re.compile('\d\d:\d\d')
+
+    for ix, row in df.iterrows():
+        month, day, year = map(int, row['Date'].split('/'))
+        
+        if pd.notna(row['Time']) and pattern.search(row['Time']):
+            hour, minute = map(int, pattern.search(row['Time']).group(0).split(':'))
+        else:
+            hour, minute = 0, 0
+
+        crash = Crash(
+            aboard=row['Aboard'],
+            datetime=datetime.datetime(year, month, day, hour, minute),
+            fatalities=row['Fatalities'],
+            ground=row['Ground'],
+            location=row['Location'],
+            summary=row['Summary']
+            )
+
+        db.session.add(crash)
+
+    db.session.commit()
+
+    return 'Done!'
