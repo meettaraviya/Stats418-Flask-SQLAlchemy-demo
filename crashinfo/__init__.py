@@ -1,13 +1,15 @@
-from crashinfo.models import Crash
 import os
 from flask import Flask
 import pandas as pd
 from flask import request
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import datetime
 import re
 import json
+
+from flask_sqlalchemy import SQLAlchemy
+
+
 
 
 # def create_app(test_config=None):
@@ -29,6 +31,7 @@ app.config.from_mapping(
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
 # ensure the instance folder exists
 try:
     os.makedirs(app.instance_path)
@@ -47,6 +50,9 @@ def hello():
 def preview():
     # return str(df[['Date','Location','Fatalities']].head())
     return df.head().to_html()
+
+
+from crashinfo.models import Crash
 
 
 @app.route('/filter', methods=['POST', 'GET'])

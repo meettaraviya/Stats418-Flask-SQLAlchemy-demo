@@ -1,5 +1,7 @@
 from crashinfo import db
 
+
+
 # Date  Time    Location    Operator    Flight No       Route   Type    Registration    cn/In   Aboard  Fatalities  Ground  Summary
 
 class Crash(db.Model):
