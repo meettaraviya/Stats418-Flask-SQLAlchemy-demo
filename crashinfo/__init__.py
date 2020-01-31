@@ -1,3 +1,4 @@
+from crashinfo.models import Crash
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -7,7 +8,7 @@ import numpy as np
 from geopy.geocoders import Nominatim
 from flask import send_file
 import crashinfo.Lecture3_flask_demo  # Add everything from last week's API
-import crashinfo.Lecture4_Visualization_demo # Import visualization routes
+import crashinfo.Lecture4_Visualization_demo  # Import visualization routes
 import os
 from flask import Flask
 import pandas as pd
@@ -40,7 +41,6 @@ app.config.from_mapping(
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 #from crashinfo.models import Crash
-from crashinfo.models import Crash
 
 # ensure the instance folder exists
 try:
