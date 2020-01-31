@@ -1,3 +1,6 @@
+import numpy as np
+from geopy.geocoders import Nominatim
+from flask import send_file
 import crashinfo.Lecture3_flask_demo  # Add everything from last week's API
 import os
 from flask import Flask
@@ -9,8 +12,6 @@ import re
 import json
 
 from flask_sqlalchemy import SQLAlchemy
-
-
 
 
 # def create_app(test_config=None):
@@ -32,6 +33,7 @@ app.config.from_mapping(
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+from crashinfo.models import Crash
 
 # ensure the instance folder exists
 try:
@@ -53,9 +55,6 @@ def hello():
 def preview():
     # return str(df[['Date','Location','Fatalities']].head())
     return df.head().to_html()
-
-
-from crashinfo.models import Crash
 
 
 @app.route('/filter', methods=['POST', 'GET'])
@@ -111,16 +110,16 @@ def filterdb():
         return 'I am a teapot!', 418
 
 
-
-from flask import send_file
-
-
-from geopy.geocoders import Nominatim
 geolocator = Nominatim()
 # df['coord'] = [geolocator.geocode(loc)[-1] for loc in df['Location']]
-import numpy as np
-df['coord'] = [(np.random.uniform(-90, 90), np.random.uniform(0, 180)) for loc in df['Location']]
+df['coord'] = [(np.random.uniform(-90, 90), np.random.uniform(0, 180))
+               for loc in df['Location']]
 
+
+#########
+#
+# Data Visualization routines
+#
 @app.route('/visualize/<string:lib>')
 def visualie(lib='matplotlib'):
     if 'year' in request.args:
@@ -133,11 +132,11 @@ def visualie(lib='matplotlib'):
 
     if lib == 'matplotlib':
 
+        query_df = df[df['Date'].str.endswith(str(year))].groupby(
+            df['Date'].str[:2]).count()['Date']
 
-        query_df = df[df['Date'].str.endswith('2000')].groupby(df['Date'].str[:2]).count()['Date']
-
-
-        import matplotlib.pyplot as plt; plt.rcdefaults()
+        import matplotlib.pyplot as plt
+        plt.rcdefaults()
         import numpy as np
         import calendar
 
@@ -156,26 +155,25 @@ def visualie(lib='matplotlib'):
 
         return response
 
-
     if lib == 'plotly':
 
         import plotly.graph_objects as go
 
-        query_df = df[df['Date'].str.endswith('2000')].groupby(df['Date'].str[:2]).count()
-
+        query_df = df[df['Date'].str.endswith(year)].groupby(
+            df['Date'].str[:2]).count()
 
         fig = go.Figure(data=go.Scattergeo(
-                lon = list(zip(query_df['coord']))[0],
-                lat = list(zip(query_df['coord']))[1],
-                text = query_df['Location'],
-                mode = 'markers',
-                # marker_color = query_df['cnt'],
-                ))
+            lon=list(zip(query_df['coord']))[0],
+            lat=list(zip(query_df['coord']))[1],
+            text=query_df['Location'],
+            mode='markers',
+            # marker_color = query_df['cnt'],
+        ))
 
         fig.update_layout(
-                title = 'Crashes',
-                # geo_scope='usa',
-            )
+            title='Crashes',
+            # geo_scope='usa',
+        )
         fig.write_image("tmp/plot.webp")
 
         response = send_file('../tmp/plot.webp')
