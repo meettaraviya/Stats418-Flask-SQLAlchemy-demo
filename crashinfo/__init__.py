@@ -1,7 +1,13 @@
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from datetime import date, timedelta, datetime
+import numpy as np
 from geopy.geocoders import Nominatim
 from flask import send_file
 import crashinfo.Lecture3_flask_demo  # Add everything from last week's API
+import crashinfo.Lecture4_Visualization_demo # Import visualization routes
 import os
 from flask import Flask
 import pandas as pd
@@ -34,6 +40,7 @@ app.config.from_mapping(
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+#from crashinfo.models import Crash
 from crashinfo.models import Crash
 
 # ensure the instance folder exists
@@ -122,7 +129,7 @@ df['coord'] = [(np.random.uniform(-90, 90), np.random.uniform(0, 180))
 # Data Visualization routines
 #
 @app.route('/visualize/<string:lib>')
-def visualie(lib='matplotlib'):
+def visualize(lib='matplotlib'):
     if 'year' in request.args:
         try:
             year = int(request.args['year'])
