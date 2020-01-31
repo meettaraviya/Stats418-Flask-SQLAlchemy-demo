@@ -67,11 +67,18 @@ def filter():
     if request.method == 'GET':
         query_df = df
 
+        # iterate over all parameters
         for k, v in request.args.items():
+
+            # if parameter corresponds to some column of the datafram
             if k in df.columns:
+
+                # filter our results using the provided value
                 query_df = query_df[query_df[k] == v]
+
         return query_df.to_html()
     else:
+        # POST methods not yet supported. What's the correct STATUS code to send here in place of 418? (HW 1 question)
         return 'I am a teapot!', 418
 
 # for adding rows to the SQL database
@@ -79,7 +86,10 @@ def filter():
 def populatedb():
     pattern = re.compile('\d\d:\d\d')
 
+    # iterate over all dataframe rows
     for ix, row in df.iterrows():
+
+        # extract month,day,year,hour,minute from the dataframe row
         month, day, year = map(int, row['Date'].split('/'))
 
         if pd.notna(row['Time']) and pattern.search(row['Time']):
@@ -88,6 +98,7 @@ def populatedb():
         else:
             hour, minute = 0, 0
 
+        # create a SQLite row object
         crash = Crash(
             aboard=row['Aboard'],
             datetime=datetime.datetime(year, month, day, hour, minute),
@@ -96,20 +107,30 @@ def populatedb():
             location=row['Location'],
             summary=row['Summary']
         )
+
+        # add the newly created row to the SQL database
         db.session.add(crash)
+
+    # THIS IS REQUIRED for changes to take place
+    # 'saves' the changes made to the database
     db.session.commit()
+
     return 'Done!'
 
 
 @app.route('/api/filter', methods=['POST', 'GET'])
 def filterdb():
     if request.method == 'GET':
+        # make a query to the database to get crashes at a given location
         if 'Location' in request.args:
             rs = db.session.query(Crash).filter_by(
                 location=request.args['Location']
             )
         else:
+            # make a query to the database to get all crashes if location not specified
             rs = db.session.query(Crash).all()
+
+        # convert results to json and return the json string
         return json.dumps([item.as_dict() for item in rs], indent=4)
     else:
         return 'I am a teapot!', 418
