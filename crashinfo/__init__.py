@@ -14,6 +14,7 @@ from flask import Flask
 import pandas as pd
 from flask import request
 from flask_migrate import Migrate
+from flask import after_this_request
 import datetime
 import re
 import json
@@ -151,6 +152,8 @@ def visualize(lib='matplotlib'):
         ticks = np.arange(len(objects))
         heights = list(query_df)
 
+        plt.cla()
+        plt.close()
         plt.bar(ticks, heights, align='center', alpha=0.5)
         plt.xticks(ticks, objects)
         plt.ylabel('Number of crashes')
