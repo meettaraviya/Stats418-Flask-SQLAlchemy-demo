@@ -24,6 +24,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_mapping(
     SECRET_KEY='dev',
+    # path to the database, and the sql flavor we are using
     SQLALCHEMY_DATABASE_URI='sqlite:///' +
     os.path.join(app.instance_path, 'crashinfo.db'),
 )
@@ -31,18 +32,13 @@ app.config.from_mapping(
 import crashinfo.Lecture3_flask_demo  # Add everything from last week's API
 import crashinfo.Lecture4_Visualization_demo  # Import visualization routes
 
-# if test_config is None:
-#     # load the instance config, if it exists, when not testing
-#     app.config.from_object(Config)
-# else:
-#     # load the test config if passed in
-#     app.config.from_mapping(test_config)
 
+# connect to the database
 db = SQLAlchemy(app)
+# migate the schema from models.py to the sqlite database
 migrate = Migrate(app, db)
 
 from crashinfo.models import Crash
-#from crashinfo.models import Crash
 
 # ensure the instance folder exists
 try:
@@ -52,6 +48,7 @@ except OSError:
 
 
 # https://www.kaggle.com/saurograndi/airplane-crashes-since-1908
+# read data from csv into a pandas dataframe
 df = pd.read_csv('Airplane_Crashes_and_Fatalities_Since_1908.csv')
 
 # a simple page that says hello
@@ -59,13 +56,12 @@ df = pd.read_csv('Airplane_Crashes_and_Fatalities_Since_1908.csv')
 def hello():
     return 'Hello, World!'
 
-
+# show a preview of the dataframe
 @app.route('/preview')
 def preview():
-    # return str(df[['Date','Location','Fatalities']].head())
     return df.head().to_html()
 
-
+# for arbitrary queries on the dataset like Location=X and Date=Y
 @app.route('/filter', methods=['POST', 'GET'])
 def filter():
     if request.method == 'GET':
@@ -78,7 +74,7 @@ def filter():
     else:
         return 'I am a teapot!', 418
 
-
+# for adding rows to the SQL database
 @app.route('/populatedb', methods=['GET'])
 def populatedb():
     pattern = re.compile('\d\d:\d\d')
@@ -119,8 +115,8 @@ def filterdb():
         return 'I am a teapot!', 418
 
 
-geolocator = Nominatim()
-# df['coord'] = [geolocator.geocode(loc)[-1] for loc in df['Location']]
+# randomly assign coordinates to each location
+# alternate: use google maps/azure maps API
 df['coord'] = [(np.random.uniform(-90, 90), np.random.uniform(0, 180))
                for loc in df['Location']]
 
@@ -129,18 +125,26 @@ df['coord'] = [(np.random.uniform(-90, 90), np.random.uniform(0, 180))
 #
 # Data Visualization routines
 #
+
+# visualize all crashes for a given year
 @app.route('/visualize/<string:lib>')
 def visualize(lib='matplotlib'):
     if 'year' in request.args:
         try:
             year = int(request.args['year'])
         except ValueError:
+            # invalid request
             return "'year' parameter should be an integer", 422
     else:
+        # invalid request
         return "You need to specify a year", 422
 
+
+    # matplotlib demo
     if lib == 'matplotlib':
 
+        # filter dataframe according to year, group by month, and
+        # count the number of dates (to get the number of crashes in that month)
         query_df = df[df['Date'].str.endswith(str(year))].groupby(
             df['Date'].str[:2]).count()['Date']
 
@@ -149,44 +153,64 @@ def visualize(lib='matplotlib'):
         import numpy as np
         import calendar
 
+        # month abbraviations using the 'calendar' inbuilt library 
         objects = calendar.month_abbr[1:]
+
+        # array for positions at which the month names will be placed
         ticks = np.arange(len(objects))
+
+        # bar heights = result of query we computed
         heights = list(query_df)
 
+        # clear plot to start with a fresh canvas
         plt.cla()
         plt.close()
-        plt.bar(ticks, heights, align='center', alpha=0.5)
+
+        # make the bar plot
+        plt.bar(ticks, heights)
+
+        # set month names as labels
         plt.xticks(ticks, objects)
+
+        # set label for y-axis
         plt.ylabel('Number of crashes')
+
+        # set title
         plt.title(f'Number of crashes by month in {year}')
 
+        # save figure to a temporary file
         plt.savefig('tmp/plot.png')
 
+        # return the file
         response = send_file('../tmp/plot.png')
-
         return response
 
+
+
+    # plotly demo
     if lib == 'plotly':
 
         import plotly.graph_objects as go
 
-        query_df = df[df['Date'].str.endswith(year)].groupby(
-            df['Date'].str[:2]).count()
+        # keep rows with the requested year
+        query_df = df[df['Date'].str.endswith(str(year))]
 
+        # draw the world map scatter plot, with each coordinate lablled with location name
         fig = go.Figure(data=go.Scattergeo(
             lon=list(zip(query_df['coord']))[0],
             lat=list(zip(query_df['coord']))[1],
             text=query_df['Location'],
             mode='markers',
-            # marker_color = query_df['cnt'],
         ))
 
+        # set title of figure
         fig.update_layout(
             title='Crashes',
-            # geo_scope='usa',
         )
+
+        # save figure to a temporary file
         fig.write_image("tmp/plot.webp")
 
+        # return the file
         response = send_file('../tmp/plot.webp')
-
         return response
