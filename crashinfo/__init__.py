@@ -1,4 +1,3 @@
-from crashinfo.models import Crash
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -7,8 +6,6 @@ from datetime import date, timedelta, datetime
 import numpy as np
 from geopy.geocoders import Nominatim
 from flask import send_file
-import crashinfo.Lecture3_flask_demo  # Add everything from last week's API
-import crashinfo.Lecture4_Visualization_demo  # Import visualization routes
 import os
 from flask import Flask
 import pandas as pd
@@ -31,6 +28,8 @@ app.config.from_mapping(
     os.path.join(app.instance_path, 'crashinfo.db'),
 )
 
+import crashinfo.Lecture3_flask_demo  # Add everything from last week's API
+import crashinfo.Lecture4_Visualization_demo  # Import visualization routes
 
 # if test_config is None:
 #     # load the instance config, if it exists, when not testing
@@ -41,6 +40,8 @@ app.config.from_mapping(
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+from crashinfo.models import Crash
 #from crashinfo.models import Crash
 
 # ensure the instance folder exists

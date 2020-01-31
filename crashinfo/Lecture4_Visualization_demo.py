@@ -3,12 +3,13 @@ import matplotlib.pylab as pl
 import matplotlib.gridspec as gridspec
 from datetime import datetime
 import os
-from flask import Flask, escape, request
+from flask import Flask, escape, request, send_file
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from datetime import date, timedelta, datetime
+from crashinfo import app
 
 
 # Initiate data a bit
@@ -17,9 +18,6 @@ Data = pd.read_csv(
 np.random.seed(42)
 obs, feat = Data.shape
 
-# This is how we initiate a flask app to then build it
-app = Flask(__name__)
-
 
 #################
 # Print count
@@ -27,7 +25,7 @@ app = Flask(__name__)
 # > http://$HOSTNAME/counts
 @app.route("/counts")
 def counts():
-    return(str("Dataset consist of " + str(obs) + " observations (crashes) and " + str(feat) + " features. Features are following:"))
+    return(str("Dataset consist of " + str(obs) + " observations (crashes) and " + str(feat)))
 
 
 #################
@@ -36,7 +34,7 @@ def counts():
 # > http://$HOSTNAME/counts/nulls
 @app.route("/counts/nulls")
 def nulls():
-    return(Data.isnull().sum())  # calculating missing values in rows)
+    return(str(Data.isnull().sum()))  # calculating missing values in rows)
 
 
 # cleaning up
@@ -102,7 +100,7 @@ def accidents_total():
 #
 #
 @app.route("/graph/by/year")
-def byyear():
+def year():
     # Temp is going to be temporary data frame
     Temp = Data.groupby(Data.Time.dt.year)[['Date']].count()
     Temp = Temp.rename(columns={"Date": "Count"})
@@ -210,19 +208,25 @@ def people():
     Fatalities = Data.groupby(Data.Time.dt.year).sum()
     Fatalities['Proportion'] = Fatalities['Fatalities'] / Fatalities['Aboard']
 
-    plt.figure(figsize=(15,6))
+    plt.figure(figsize=(15, 6))
     plt.subplot(1, 2, 1)
-    plt.fill_between(Fatalities.index, 'Aboard', data=Fatalities, color="skyblue", alpha=0.2)
-    plt.plot(Fatalities.index, 'Aboard', data=Fatalities, marker = ".", color="Slateblue", alpha=0.6, linewidth=1)
-    plt.fill_between(Fatalities.index, 'Fatalities', data=Fatalities, color="olive", alpha=0.2)
-    plt.plot(Fatalities.index, 'Fatalities', data=Fatalities, color="olive", marker = ".", alpha=0.6, linewidth=1)
+    plt.fill_between(Fatalities.index, 'Aboard',
+                     data=Fatalities, color="skyblue", alpha=0.2)
+    plt.plot(Fatalities.index, 'Aboard', data=Fatalities,
+             marker=".", color="Slateblue", alpha=0.6, linewidth=1)
+    plt.fill_between(Fatalities.index, 'Fatalities',
+                     data=Fatalities, color="olive", alpha=0.2)
+    plt.plot(Fatalities.index, 'Fatalities', data=Fatalities,
+             color="olive", marker=".", alpha=0.6, linewidth=1)
     plt.legend(fontsize=10)
     plt.xlabel('Year', fontsize=10)
     plt.ylabel('Amount of people', fontsize=10)
-    plt.title('Total number of people involved by Year', loc='Center', fontsize=14)
+    plt.title('Total number of people involved by Year',
+              loc='Center', fontsize=14)
 
     plt.subplot(1, 2, 2)
-    plt.plot(Fatalities.index, 'Proportion', data=Fatalities, marker = ".", color = 'red', linewidth=1)
+    plt.plot(Fatalities.index, 'Proportion', data=Fatalities,
+             marker=".", color='red', linewidth=1)
     plt.xlabel('Year', fontsize=10)
     plt.ylabel('Ratio', fontsize=10)
     plt.title('Fatalities / Total Ratio by Year', loc='Center', fontsize=14)
